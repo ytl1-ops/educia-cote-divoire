@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --header-height: 64px;
+}
+
+html,
+body {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+.conteneur-page {
+  @apply mx-auto w-full max-w-5xl px-4 sm:px-6;
+}
+
+.carte {
+  @apply rounded-xl2 border border-slate-200 bg-white p-5 shadow-sm;
+}
+
+.bouton-primaire {
+  @apply inline-flex items-center justify-center rounded-xl bg-educia-600 px-5 py-3 font-semibold text-white transition hover:bg-educia-700 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.bouton-secondaire {
+  @apply inline-flex items-center justify-center rounded-xl border border-educia-200 bg-white px-5 py-3 font-semibold text-educia-700 transition hover:bg-educia-50 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.champ-saisie {
+  @apply w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:border-educia-500 focus:outline-none focus:ring-2 focus:ring-educia-200;
+}
+
+.etiquette {
+  @apply mb-1 block text-sm font-medium text-slate-700;
+}

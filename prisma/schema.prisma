@@ -1,0 +1,543 @@
+// ==========================================================================
+// EDUCIA CÔTE D'IVOIRE — Schéma de base de données (PostgreSQL)
+// Documentation détaillée : voir docs/BASE_DE_DONNEES.md
+// ==========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------------------------------------------
+// ENUMS
+// --------------------------------------------------------------------------
+
+enum RoleUtilisateur {
+  ELEVE
+  PARENT
+  ENSEIGNANT
+  ADMIN
+}
+
+enum Niveau {
+  MATERNELLE
+  CP1
+  CP2
+  CE1
+  CE2
+  CM1
+  CM2
+  SIXIEME
+  CINQUIEME
+  QUATRIEME
+  TROISIEME
+  SECONDE
+  PREMIERE
+  TERMINALE
+}
+
+enum CycleScolaire {
+  PRESCOLAIRE
+  PRIMAIRE
+  COLLEGE
+  LYCEE
+}
+
+enum TypeDocument {
+  PHOTO
+  SCAN
+  PDF
+  WORD
+  EXCEL
+  POWERPOINT
+  IMAGE
+  VIDEO
+  AUDIO
+  TEXTE
+}
+
+enum StatutAnalyse {
+  EN_ATTENTE
+  EN_COURS
+  TERMINEE
+  ECHEC
+}
+
+enum TypeRessource {
+  RESUME
+  FICHE_REVISION
+  CARTE_MENTALE
+  QUIZ
+  EXERCICES
+  CORRIGE
+  CONTROLE
+  DEVOIR_SURVEILLE
+  EXAMEN_BLANC
+}
+
+enum NiveauDifficulte {
+  FACILE
+  INTERMEDIAIRE
+  AVANCE
+}
+
+enum TypeEvaluation {
+  QUIZ
+  CONTROLE
+  DEVOIR_SURVEILLE
+  CEPE_BLANC
+  BEPC_BLANC
+  BAC_BLANC
+}
+
+enum RoleMessage {
+  ELEVE
+  IA
+  SYSTEME
+}
+
+enum PeriodeRapport {
+  HEBDOMADAIRE
+  MENSUEL
+}
+
+enum CanalEnvoi {
+  WHATSAPP
+  EMAIL
+  PDF
+}
+
+enum MethodePedagogique {
+  ACTIVE_RECALL
+  REPETITION_ESPACEE
+  APPRENTISSAGE_PAR_LA_PRATIQUE
+  RESOLUTION_DE_PROBLEMES
+  APPRENTISSAGE_ADAPTATIF
+  MAITRISE
+  GAMIFICATION
+  PEDAGOGIE_PAR_COMPETENCES
+  ENSEIGNEMENT_DIFFERENCIE
+  CLASSE_INVERSEE
+}
+
+// --------------------------------------------------------------------------
+// UTILISATEURS & RÔLES
+// --------------------------------------------------------------------------
+
+model Utilisateur {
+  id            String          @id @default(cuid())
+  email         String?         @unique
+  telephone     String?         @unique
+  motDePasseH   String
+  role          RoleUtilisateur
+  prenom        String
+  nom           String
+  langue        String          @default("fr")
+  actif         Boolean         @default(true)
+  derniereConnexion DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  eleve         Eleve?
+  parent        Parent?
+  enseignant    Enseignant?
+  admin         Admin?
+
+  journauxActivite JournalActivite[]
+
+  @@index([role])
+  @@map("utilisateurs")
+}
+
+model Eleve {
+  id                 String   @id @default(cuid())
+  utilisateurId      String   @unique
+  utilisateur        Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  niveau             Niveau
+  etablissement      String?
+  dateNaissance      DateTime?
+  points             Int      @default(0)
+  niveauGamification Int      @default(1)
+  streakJours        Int      @default(0)
+  derniereActivite   DateTime?
+  modeHorsLigneActif Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  parents            RelationParentEleve[]
+  documents          Document[]
+  tentatives         TentativeExercice[]
+  evaluations        Evaluation[]
+  sessionsTuteur     SessionTuteurIA[]
+  badgesObtenus      BadgeObtenu[]
+  profilsApprentissage ProfilApprentissage[]
+  rapports           RapportParent[]
+  ressources         RessourcePedagogique[] @relation("RessourcesEleve")
+
+  @@map("eleves")
+}
+
+model Parent {
+  id            String   @id @default(cuid())
+  utilisateurId String   @unique
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  telephoneWhatsapp String?
+  createdAt     DateTime @default(now())
+
+  enfants       RelationParentEleve[]
+
+  @@map("parents")
+}
+
+model RelationParentEleve {
+  id        String   @id @default(cuid())
+  parentId  String
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  eleveId   String
+  eleve     Eleve    @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([parentId, eleveId])
+  @@map("relations_parent_eleve")
+}
+
+model Enseignant {
+  id            String   @id @default(cuid())
+  utilisateurId String   @unique
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  matieres      MatiereEnseignant[]
+  niveauxEnseignes Niveau[]
+  etablissement String?
+  createdAt     DateTime @default(now())
+
+  @@map("enseignants")
+}
+
+model Admin {
+  id            String   @id @default(cuid())
+  utilisateurId String   @unique
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@map("admins")
+}
+
+// --------------------------------------------------------------------------
+// PROGRAMME SCOLAIRE : MATIÈRES & CHAPITRES
+// --------------------------------------------------------------------------
+
+model Matiere {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nom         String
+  cycles      CycleScolaire[]
+  couleur     String?  @default("#0B8FEF")
+  icone       String?
+  createdAt   DateTime @default(now())
+
+  chapitres   Chapitre[]
+  exercices   Exercice[]
+  documents   Document[]
+  enseignants MatiereEnseignant[]
+  sessionsTuteur SessionTuteurIA[]
+  profilsApprentissage ProfilApprentissage[]
+
+  @@map("matieres")
+}
+
+model MatiereEnseignant {
+  id           String     @id @default(cuid())
+  enseignantId String
+  enseignant   Enseignant @relation(fields: [enseignantId], references: [id], onDelete: Cascade)
+  matiereId    String
+  matiere      Matiere    @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+
+  @@unique([enseignantId, matiereId])
+  @@map("matieres_enseignants")
+}
+
+model Chapitre {
+  id                 String   @id @default(cuid())
+  matiereId          String
+  matiere            Matiere  @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  niveau             Niveau
+  titre              String
+  ordre              Int      @default(0)
+  competencesVisees  String[]
+  objectifsPedagogiques String[]
+  difficultesPotentielles String[]
+  createdAt          DateTime @default(now())
+
+  documents          Document[]
+  exercices          Exercice[]
+
+  @@index([matiereId, niveau])
+  @@map("chapitres")
+}
+
+// --------------------------------------------------------------------------
+// IMPORT DE DOCUMENTS & ANALYSE AUTOMATIQUE
+// --------------------------------------------------------------------------
+
+model Document {
+  id               String        @id @default(cuid())
+  eleveId          String
+  eleve            Eleve         @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  type             TypeDocument
+  nomFichier       String
+  urlFichier       String
+  tailleOctets     Int?
+  statutAnalyse    StatutAnalyse @default(EN_ATTENTE)
+  texteExtrait     String?
+  matiereDetecteeId String?
+  matiereDetectee  Matiere?      @relation(fields: [matiereDetecteeId], references: [id])
+  niveauDetecte    Niveau?
+  chapitreDetecteId String?
+  chapitreDetecte  Chapitre?     @relation(fields: [chapitreDetecteId], references: [id])
+  indiceConfiance  Float?
+  messageErreur    String?
+  createdAt        DateTime      @default(now())
+  analyseTerminee  DateTime?
+
+  ressources       RessourcePedagogique[]
+  exercicesGeneres Exercice[]
+
+  @@index([eleveId, statutAnalyse])
+  @@map("documents")
+}
+
+model RessourcePedagogique {
+  id            String        @id @default(cuid())
+  eleveId       String
+  eleve         Eleve         @relation("RessourcesEleve", fields: [eleveId], references: [id], onDelete: Cascade)
+  documentId    String?
+  document      Document?     @relation(fields: [documentId], references: [id])
+  type          TypeRessource
+  titre         String
+  contenuJson   Json
+  createdAt     DateTime      @default(now())
+
+  @@index([eleveId, type])
+  @@map("ressources_pedagogiques")
+}
+
+// --------------------------------------------------------------------------
+// EXERCICES & ÉVALUATIONS
+// --------------------------------------------------------------------------
+
+model Exercice {
+  id                    String           @id @default(cuid())
+  matiereId             String
+  matiere               Matiere          @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  chapitreId            String?
+  chapitre              Chapitre?        @relation(fields: [chapitreId], references: [id])
+  niveau                Niveau
+  difficulte            NiveauDifficulte
+  enonce                String
+  solutionDetaillee     String
+  explicationPedagogique String
+  astuceMemorisation    String?
+  documentSourceId      String?
+  documentSource        Document?        @relation(fields: [documentSourceId], references: [id])
+  genereParIA           Boolean          @default(true)
+  createdAt             DateTime         @default(now())
+
+  tentatives            TentativeExercice[]
+  evaluationItems       EvaluationExercice[]
+
+  @@index([matiereId, niveau, difficulte])
+  @@map("exercices")
+}
+
+model TentativeExercice {
+  id               String   @id @default(cuid())
+  eleveId          String
+  eleve            Eleve    @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  exerciceId       String
+  exercice         Exercice @relation(fields: [exerciceId], references: [id], onDelete: Cascade)
+  reponseEleve     String
+  estCorrecte      Boolean
+  tempsReponseSecondes Int?
+  tentativeNumero  Int      @default(1)
+  createdAt        DateTime @default(now())
+
+  @@index([eleveId, exerciceId])
+  @@map("tentatives_exercices")
+}
+
+model Evaluation {
+  id            String          @id @default(cuid())
+  eleveId       String
+  eleve         Eleve           @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  type          TypeEvaluation
+  matiereId     String?
+  niveau        Niveau
+  titre         String
+  scoreObtenu   Float?
+  scoreMax      Float?
+  dureeMinutes  Int?
+  statutTerminee Boolean        @default(false)
+  createdAt     DateTime        @default(now())
+  termineeAt    DateTime?
+
+  items         EvaluationExercice[]
+
+  @@index([eleveId, type])
+  @@map("evaluations")
+}
+
+model EvaluationExercice {
+  id            String     @id @default(cuid())
+  evaluationId  String
+  evaluation    Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  exerciceId    String
+  exercice      Exercice   @relation(fields: [exerciceId], references: [id])
+  ordre         Int        @default(0)
+  reponseEleve  String?
+  pointsObtenus Float?
+  pointsMax     Float      @default(1)
+
+  @@unique([evaluationId, exerciceId])
+  @@map("evaluation_exercices")
+}
+
+// --------------------------------------------------------------------------
+// TUTEUR IA — SESSIONS DE DIALOGUE
+// --------------------------------------------------------------------------
+
+model SessionTuteurIA {
+  id            String    @id @default(cuid())
+  eleveId       String
+  eleve         Eleve     @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  matiereId     String?
+  matiere       Matiere?  @relation(fields: [matiereId], references: [id])
+  niveau        Niveau
+  methode       MethodePedagogique?
+  dateDebut     DateTime  @default(now())
+  dateFin       DateTime?
+  resume        String?
+
+  messages      MessageTuteur[]
+  recherches    RechercheWeb[]
+
+  @@index([eleveId])
+  @@map("sessions_tuteur_ia")
+}
+
+model MessageTuteur {
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     SessionTuteurIA @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role        RoleMessage
+  contenu     String
+  audioUrl    String?
+  createdAt   DateTime        @default(now())
+
+  @@index([sessionId])
+  @@map("messages_tuteur")
+}
+
+// --------------------------------------------------------------------------
+// RECHERCHE WEB AUTONOME & VÉRIFICATION DES SOURCES
+// --------------------------------------------------------------------------
+
+model RechercheWeb {
+  id               String          @id @default(cuid())
+  sessionId        String?
+  session          SessionTuteurIA? @relation(fields: [sessionId], references: [id])
+  requete          String
+  raisonDeclenchement String
+  sourcesUtilisees Json
+  indiceConfiance  Float
+  createdAt        DateTime        @default(now())
+
+  @@map("recherches_web")
+}
+
+// --------------------------------------------------------------------------
+// APPRENTISSAGE ADAPTATIF & INTELLIGENCE PRÉDICTIVE
+// --------------------------------------------------------------------------
+
+model ProfilApprentissage {
+  id                  String   @id @default(cuid())
+  eleveId             String
+  eleve               Eleve    @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  matiereId           String
+  matiere             Matiere  @relation(fields: [matiereId], references: [id])
+  pointsForts         String[]
+  difficultes         String[]
+  erreursRecurrentes  String[]
+  tempsReponseMoyenSec Float?
+  risqueEchec         Float    @default(0)
+  derniereMiseAJour   DateTime @default(now())
+
+  @@unique([eleveId, matiereId])
+  @@map("profils_apprentissage")
+}
+
+model JournalActivite {
+  id             String      @id @default(cuid())
+  utilisateurId  String
+  utilisateur    Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  action         String
+  matiereId      String?
+  dureeSecondes  Int?
+  metadonnees    Json?
+  createdAt      DateTime    @default(now())
+
+  @@index([utilisateurId, createdAt])
+  @@map("journaux_activite")
+}
+
+// --------------------------------------------------------------------------
+// GAMIFICATION
+// --------------------------------------------------------------------------
+
+model Badge {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nom         String
+  description String
+  icone       String
+  critere     String
+  createdAt   DateTime @default(now())
+
+  obtentions  BadgeObtenu[]
+
+  @@map("badges")
+}
+
+model BadgeObtenu {
+  id             String   @id @default(cuid())
+  eleveId        String
+  eleve          Eleve    @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  badgeId        String
+  badge          Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  dateObtention  DateTime @default(now())
+
+  @@unique([eleveId, badgeId])
+  @@map("badges_obtenus")
+}
+
+// --------------------------------------------------------------------------
+// RAPPORTS PARENTS
+// --------------------------------------------------------------------------
+
+model RapportParent {
+  id              String         @id @default(cuid())
+  eleveId         String
+  eleve           Eleve          @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  periode         PeriodeRapport
+  contenuJson     Json
+  canauxEnvoi     CanalEnvoi[]
+  dateGeneration  DateTime       @default(now())
+  periodeDebut    DateTime
+  periodeFin      DateTime
+
+  @@index([eleveId, periode])
+  @@map("rapports_parents")
+}
