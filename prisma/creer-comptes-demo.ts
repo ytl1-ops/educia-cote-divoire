@@ -4,6 +4,8 @@
  * - le compte administrateur du porteur de projet
  * - un compte élève de démonstration
  * - un compte parent de démonstration, déjà lié à l'élève démo
+ * - le profil parent réel du porteur de projet (Yoro Louis), sans mot de
+ *   passe, qui apparaît dans la liste de sélection de /connexion
  *
  * Idempotent : ne recrée rien si les comptes existent déjà, donc sans
  * danger de le laisser dans le pipeline de build.
@@ -64,6 +66,28 @@ async function creerSiAbsent(params: {
   return utilisateur.id;
 }
 
+/** Crée un profil familial réel (sans email ni mot de passe), identifié par nom+rôle pour l'idempotence. */
+async function creerProfilSiAbsent(params: { role: "PARENT" | "ELEVE" | "ENSEIGNANT"; prenom: string; nom: string; niveau?: string }) {
+  const existant = await prisma.utilisateur.findFirst({ where: { prenom: params.prenom, nom: params.nom, role: params.role } });
+  if (existant) {
+    console.log(`[OK] Profil déjà existant : ${params.prenom} ${params.nom} (${params.role})`);
+    return existant.id;
+  }
+
+  const utilisateur = await prisma.utilisateur.create({
+    data: {
+      role: params.role,
+      prenom: params.prenom,
+      nom: params.nom,
+      ...(params.role === "PARENT" ? { parent: { create: {} } } : {}),
+      ...(params.role === "ELEVE" ? { eleve: { create: { niveau: params.niveau as any } } } : {}),
+      ...(params.role === "ENSEIGNANT" ? { enseignant: { create: {} } } : {}),
+    },
+  });
+  console.log(`[CREE] Profil ${params.role} : ${params.prenom} ${params.nom} (sans mot de passe)`);
+  return utilisateur.id;
+}
+
 async function lierParentEleve(emailParent: string, emailEleve: string) {
   const parent = await prisma.parent.findFirst({ where: { utilisateur: { email: emailParent } } });
   const eleve = await prisma.eleve.findFirst({ where: { utilisateur: { email: emailEleve } } });
@@ -104,6 +128,10 @@ async function main() {
     nom: "Démo",
   });
   await lierParentEleve("parent.demo@educia.ci", "eleve.demo@educia.ci");
+
+  console.log("=== Profil réel du porteur de projet ===");
+  await creerProfilSiAbsent({ role: "PARENT", prenom: "Yoro", nom: "Louis" });
+
   console.log("=== Fin comptes de démonstration ===");
 }
 
