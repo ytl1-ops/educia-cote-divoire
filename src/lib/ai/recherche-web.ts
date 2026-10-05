@@ -1,4 +1,4 @@
-import { demanderClaude, extraireJSON } from "@/lib/ai/claude";
+import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
 
 /**
  * Agent de recherche web autonome.
@@ -46,7 +46,7 @@ export async function evaluerBesoinRecherche(params: {
 
 Réponds UNIQUEMENT avec un JSON : { "rechercheNecessaire": boolean, "raison": string }`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [
       {
@@ -132,7 +132,7 @@ export async function verifierEtSynthetiserResultats(params: {
 
 Réponds UNIQUEMENT avec un JSON : { "reponseSynthetisee": string, "indiceConfiance": number }`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [
       {

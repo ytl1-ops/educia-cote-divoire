@@ -24,7 +24,7 @@
                 │                              │
 ┌───────────────▼───────────────┐  ┌───────────▼─────────────────────┐
 │   Prisma ORM → PostgreSQL      │  │   Moteur IA (src/lib/ai/*)       │
-│   Utilisateurs, rôles,         │  │   claude.ts        client Claude │
+│   Utilisateurs, rôles,         │  │   gemini.ts        client IA (Gemini) │
 │   programme scolaire,          │  │   tuteur-prompt.ts moteur péda.  │
 │   documents, exercices,        │  │   ocr.ts           vision/OCR    │
 │   évaluations, gamification,   │  │   generateur-exercices.ts        │
@@ -38,7 +38,7 @@
 
 - **Next.js App Router monolithique** (frontend + backend dans un seul projet) : réduit la complexité opérationnelle pour une V1, permet un déploiement unique (Vercel ou conteneur Docker), tout en gardant une séparation nette des responsabilités par dossier (`src/app/api/*` = backend, `src/app/(pages)` = frontend, `src/lib/*` = logique métier partagée).
 - **Prisma + PostgreSQL** : schéma fortement typé généré automatiquement vers TypeScript, migrations versionnées, adapté à la fois à un hébergement managé (Neon, Supabase) et à une instance auto-hébergée.
-- **Anthropic Claude comme moteur IA unique** (texte + vision) : un seul fournisseur couvre le tuteur conversationnel, l'OCR/vision (texte imprimé et manuscrit, schémas, formules), la génération d'exercices/examens et la correction — ce qui simplifie l'intégration par rapport à l'orchestration de plusieurs services spécialisés (OCR dédié + LLM séparé).
+- **Google Gemini comme moteur IA unique** (texte + vision), sur son palier gratuit : un seul fournisseur couvre le tuteur conversationnel, l'OCR/vision (texte imprimé et manuscrit, schémas, formules), la génération d'exercices/examens et la correction, sans frais pour un usage modéré — au prix d'un quota quotidien de requêtes à surveiller si l'usage grandit (voir docs/DEPLOIEMENT.md).
 - **JWT en cookie httpOnly** plutôt qu'une bibliothèque d'authentification tierce : contrôle total sur le modèle de rôles (élève/parent/enseignant/admin) sans dépendance à un fournisseur externe, au prix d'une surface de code légèrement plus grande (acceptable ici, le code est court et isolé dans `src/lib/auth.ts`).
 
 ## 3. Modèle pédagogique du tuteur IA
@@ -52,7 +52,7 @@ La règle « ne jamais donner la réponse immédiatement » est une instruction 
 1. L'élève importe un fichier (`POST /api/documents`, `multipart/form-data`).
 2. Le fichier est stocké (pilote `local` par défaut, voir `src/lib/stockage.ts` — bascule vers S3/R2 en production).
 3. Analyse synchrone selon le type :
-   - **Image/Scan** → vision Claude (`analyserImageDocument`) : extraction du texte (imprimé ou manuscrit), détection matière/niveau/chapitre, compétences visées, difficultés potentielles.
+   - **Image/Scan** → vision Gemini (`analyserImageDocument`) : extraction du texte (imprimé ou manuscrit), détection matière/niveau/chapitre, compétences visées, difficultés potentielles.
    - **PDF** → extraction de texte via `pdf-parse` ; si le texte est trop court (< 40 caractères, probable PDF scanné sans couche texte), l'analyse échoue avec un message explicite invitant à réimporter en image.
    - **TXT** → analyse directe du texte.
    - **Word/Excel/PowerPoint/audio/vidéo** → import accepté et stocké, mais l'analyse automatique n'est **pas encore implémentée** (nécessite des convertisseurs dédiés, voir section 6).
@@ -62,7 +62,7 @@ La règle « ne jamais donner la réponse immédiatement » est une instruction 
 
 `src/lib/ai/recherche-web.ts` implémente les règles du cahier des charges :
 
-1. **Ordre de priorité strict** : base de connaissances interne → documents importés → historique de l'élève → web. `evaluerBesoinRecherche` interroge Claude pour décider si une recherche externe est réellement nécessaire (information manquante, à actualiser, ou exemples supplémentaires requis) — la très grande majorité des questions scolaires standard ne déclenchent **aucun** appel réseau.
+1. **Ordre de priorité strict** : base de connaissances interne → documents importés → historique de l'élève → web. `evaluerBesoinRecherche` interroge Gemini pour décider si une recherche externe est réellement nécessaire (information manquante, à actualiser, ou exemples supplémentaires requis) — la très grande majorité des questions scolaires standard ne déclenchent **aucun** appel réseau.
 2. **Recherche** : si `WEB_SEARCH_API_KEY` est configurée, interroge un fournisseur (Brave Search par défaut, adaptable). Sans clé, la recherche reste désactivée par conception et l'application continue de fonctionner sur ses connaissances internes.
 3. **Vérification des sources** : les résultats sont filtrés par domaine (liste `SOURCES_AUTORISEES` : Wikipédia, Khan Academy, OpenStax, Coursera, MIT OCW, Britannica, UNESCO, National Geographic Education, BBC Learning, sites `.gouv.ci`/`.gov`/`.edu`). Une synthèse n'est produite que si au moins une source fiable est trouvée, avec un indice de confiance explicite.
 

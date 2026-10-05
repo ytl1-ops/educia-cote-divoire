@@ -1,4 +1,4 @@
-import { demanderClaude, extraireJSON } from "@/lib/ai/claude";
+import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
 import { CodeNiveau, definitionNiveau } from "@/lib/programmes/curriculum";
 import { ExerciceGenere } from "@/lib/ai/generateur-exercices";
 
@@ -43,7 +43,7 @@ export async function genererEpreuveExamen(params: {
 Réponds UNIQUEMENT avec un JSON :
 { "dureeMinutes": number, "bareme": number, "exercices": [{ "enonce": string, "solutionDetaillee": string, "explicationPedagogique": string, "astuceMemorisation": string }, ...] }`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [
       { role: "user", content: `Génère ${nombre} exercices formant une épreuve complète et cohérente de ${infos.nom} en ${params.matiereCode}.` },

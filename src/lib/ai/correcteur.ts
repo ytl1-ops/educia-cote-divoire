@@ -1,4 +1,4 @@
-import { demanderClaude, extraireJSON } from "@/lib/ai/claude";
+import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
 import { CodeNiveau, definitionNiveau } from "@/lib/programmes/curriculum";
 
 export interface ResultatCorrectionReponse {
@@ -27,7 +27,7 @@ export async function corrigerReponseExercice(params: {
 Réponds UNIQUEMENT avec un JSON :
 { "estCorrecte": boolean, "scorePourcentage": number (0-100), "feedback": string, "pointsAAmeliorer": string[], "encouragement": string }`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [
       {
@@ -74,7 +74,7 @@ export async function corrigerTexteFrancais(params: {
 Réponds UNIQUEMENT avec un JSON :
 { "texteCorrige": string, "erreurs": [{ "type": "orthographe"|"grammaire"|"conjugaison"|"syntaxe"|"ponctuation"|"vocabulaire", "extraitOriginal": string, "correction": string, "explication": string }], "appreciationGenerale": string, "pistesAmelioration": string[] }`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [
       {

@@ -1,4 +1,4 @@
-import { demanderClaudeAvecImage, demanderClaude, extraireJSON, ImagePourClaude } from "@/lib/ai/claude";
+import { demanderIAAvecImage, demanderIA, extraireJSON, ImagePourIA } from "@/lib/ai/gemini";
 import { MATIERES, NIVEAUX } from "@/lib/programmes/curriculum";
 
 export interface ResultatAnalyseDocument {
@@ -38,9 +38,9 @@ Réponds UNIQUEMENT avec un objet JSON strictement conforme à ce schéma, sans 
   "typeContenu": "texte_imprime" | "ecriture_manuscrite" | "mixte" | "tableau_graphique" | "formule" | "schema" | "inconnu"
 }`;
 
-/** Analyse une image (photo, scan) via la vision de Claude. */
-export async function analyserImageDocument(image: ImagePourClaude): Promise<ResultatAnalyseDocument> {
-  const reponse = await demanderClaudeAvecImage({
+/** Analyse une image (photo, scan) via la vision de Gemini. */
+export async function analyserImageDocument(image: ImagePourIA): Promise<ResultatAnalyseDocument> {
+  const reponse = await demanderIAAvecImage({
     systeme: PROMPT_SYSTEME_ANALYSE,
     instructionUtilisateur:
       "Analyse ce document scolaire conformément à tes instructions et renvoie uniquement le JSON demandé.",
@@ -55,7 +55,7 @@ export async function analyserImageDocument(image: ImagePourClaude): Promise<Res
  * ou fichier .txt/.csv importé) — évite un aller-retour vision inutile.
  */
 export async function analyserTexteDocument(texte: string): Promise<ResultatAnalyseDocument> {
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme: PROMPT_SYSTEME_ANALYSE,
     messages: [
       {

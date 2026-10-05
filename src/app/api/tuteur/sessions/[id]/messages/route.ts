@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigerEleve, reponseErreur, ErreurAPI } from "@/lib/securite-api";
-import { demanderClaude } from "@/lib/ai/claude";
+import { demanderIA, MessageIA } from "@/lib/ai/gemini";
 import { construirePromptTuteur } from "@/lib/ai/tuteur-prompt";
 import { agentRechercheAutonome } from "@/lib/ai/recherche-web";
 import { ajouterPoints, mettreAJourStreak, POINTS } from "@/lib/gamification";
 import type { CodeNiveau } from "@/lib/programmes/curriculum";
-import type { Anthropic } from "@anthropic-ai/sdk";
 
 const schemaMessage = z.object({ contenu: z.string().min(1).max(4000) });
 
@@ -83,13 +82,13 @@ export async function POST(requete: NextRequest, { params }: { params: Promise<{
         extraitDocumentImporte: contexteDocuments || undefined,
       }) + complementRecherche;
 
-    const historique: Anthropic.MessageParam[] = session.messages.map((m) => ({
+    const historique: MessageIA[] = session.messages.map((m) => ({
       role: m.role === "ELEVE" ? "user" : "assistant",
       content: m.contenu,
     }));
     historique.push({ role: "user", content: contenu });
 
-    const reponseIA = await demanderClaude({ systeme: promptSysteme, messages: historique, maxTokens: 1536 });
+    const reponseIA = await demanderIA({ systeme: promptSysteme, messages: historique, maxTokens: 1536 });
 
     const messageIA = await prisma.messageTuteur.create({ data: { sessionId: id, role: "IA", contenu: reponseIA } });
 

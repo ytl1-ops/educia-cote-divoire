@@ -1,4 +1,4 @@
-import { demanderClaude, extraireJSON } from "@/lib/ai/claude";
+import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
 import { CodeNiveau, definitionMatiere, definitionNiveau } from "@/lib/programmes/curriculum";
 
 export interface ExerciceGenere {
@@ -50,7 +50,7 @@ Réponds UNIQUEMENT avec un JSON de cette forme exacte, sans aucun texte autour 
     params.contexteSupplementaire ? `\nContexte supplémentaire tiré du cours de l'élève :\n"""${params.contexteSupplementaire.slice(0, 6000)}"""` : ""
   }\nGénère exactement ${n.facile} exercices faciles, ${n.intermediaire} intermédiaires et ${n.avance} avancés.`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [{ role: "user", content: instruction }],
     maxTokens: 8192,
@@ -79,7 +79,7 @@ export async function genererVariantesExercice(params: {
 
 Réponds UNIQUEMENT avec un JSON : { "variantes": [${SCHEMA_EXERCICE}, ...] }`;
 
-  const reponse = await demanderClaude({
+  const reponse = await demanderIA({
     systeme,
     messages: [
       {
