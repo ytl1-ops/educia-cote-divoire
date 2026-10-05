@@ -132,7 +132,7 @@ model Utilisateur {
   id            String          @id @default(cuid())
   email         String?         @unique
   telephone     String?         @unique
-  motDePasseH   String
+  motDePasseH   String?         // absent pour les profils élève/parent/enseignant créés sans mot de passe
   role          RoleUtilisateur
   prenom        String
   nom           String

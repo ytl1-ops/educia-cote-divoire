@@ -20,7 +20,7 @@ export async function POST(requete: NextRequest) {
     where: { OR: [{ email: identifiant }, { telephone: identifiant }] },
   });
 
-  if (!utilisateur || !(await verifierMotDePasse(motDePasse, utilisateur.motDePasseH))) {
+  if (!utilisateur || !utilisateur.motDePasseH || !(await verifierMotDePasse(motDePasse, utilisateur.motDePasseH))) {
     return NextResponse.json({ erreur: "Identifiants incorrects" }, { status: 401 });
   }
 

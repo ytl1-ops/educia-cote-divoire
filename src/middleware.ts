@@ -12,12 +12,15 @@ const PREFIXES_PROTEGES: Record<string, string> = {
 
 export async function middleware(requete: NextRequest) {
   const chemin = requete.nextUrl.pathname;
+  if (chemin === "/admin/connexion") return NextResponse.next();
+
   const prefixeCorrespondant = Object.keys(PREFIXES_PROTEGES).find((p) => chemin.startsWith(p));
   if (!prefixeCorrespondant) return NextResponse.next();
 
+  const pageConnexion = prefixeCorrespondant === "/admin" ? "/admin/connexion" : "/connexion";
   const jeton = requete.cookies.get(NOM_COOKIE_SESSION)?.value;
   if (!jeton) {
-    return NextResponse.redirect(new URL(`/connexion?redirection=${encodeURIComponent(chemin)}`, requete.url));
+    return NextResponse.redirect(new URL(`${pageConnexion}?redirection=${encodeURIComponent(chemin)}`, requete.url));
   }
 
   try {
@@ -29,7 +32,7 @@ export async function middleware(requete: NextRequest) {
     }
     return NextResponse.next();
   } catch {
-    return NextResponse.redirect(new URL(`/connexion?redirection=${encodeURIComponent(chemin)}`, requete.url));
+    return NextResponse.redirect(new URL(`${pageConnexion}?redirection=${encodeURIComponent(chemin)}`, requete.url));
   }
 }
 

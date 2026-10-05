@@ -17,8 +17,6 @@ export default function PageInscription() {
   const [role, setRole] = useState<"ELEVE" | "PARENT" | "ENSEIGNANT">("ELEVE");
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
-  const [email, setEmail] = useState("");
-  const [motDePasse, setMotDePasse] = useState("");
   const [niveau, setNiveau] = useState<CodeNiveau>(NIVEAUX[0].code);
   const [erreur, setErreur] = useState<string | null>(null);
   const [chargement, setChargement] = useState(false);
@@ -31,7 +29,7 @@ export default function PageInscription() {
     try {
       const { utilisateur } = await appelAPI<{ utilisateur: { role: string; codeLiaisonEleve?: string } }>(
         "/api/auth/inscription",
-        { method: "POST", corpsJSON: { role, prenom, nom, email, motDePasse, niveau: role === "ELEVE" ? niveau : undefined } }
+        { method: "POST", corpsJSON: { role, prenom, nom, niveau: role === "ELEVE" ? niveau : undefined } }
       );
       if (utilisateur.codeLiaisonEleve) {
         setCodeLiaison(utilisateur.codeLiaisonEleve);
@@ -50,9 +48,9 @@ export default function PageInscription() {
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
         <div className="carte w-full max-w-sm text-center">
           <div className="text-4xl">🎉</div>
-          <h1 className="mt-3 text-lg font-bold text-slate-900">Compte créé !</h1>
+          <h1 className="mt-3 text-lg font-bold text-slate-900">Profil créé !</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Communique ce code à tes parents pour qu'ils puissent suivre tes progrès :
+            Communique ce code à tes parents pour qu&apos;ils puissent suivre tes progrès :
           </p>
           <p className="mt-3 rounded-lg bg-educia-50 py-3 text-2xl font-bold tracking-widest text-educia-700">{codeLiaison}</p>
           <button className="bouton-primaire mt-6 w-full" onClick={() => routeur.push("/eleve/tableau-de-bord")}>
@@ -66,7 +64,8 @@ export default function PageInscription() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="carte w-full max-w-sm">
-        <h1 className="text-xl font-bold text-slate-900">Créer un compte EDUCIA</h1>
+        <h1 className="text-xl font-bold text-slate-900">Nouveau profil EDUCIA</h1>
+        <p className="mt-1 text-sm text-slate-500">Usage familial : indique simplement ton prénom, aucun mot de passe nécessaire.</p>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           {(["ELEVE", "PARENT", "ENSEIGNANT"] as const).map((r) => (
@@ -94,10 +93,6 @@ export default function PageInscription() {
               <input className="champ-saisie" value={nom} onChange={(e) => setNom(e.target.value)} required />
             </div>
           </div>
-          <div>
-            <label className="etiquette">Email</label>
-            <input type="email" className="champ-saisie" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
           {role === "ELEVE" && (
             <div>
               <label className="etiquette">Niveau scolaire</label>
@@ -110,27 +105,16 @@ export default function PageInscription() {
               </select>
             </div>
           )}
-          <div>
-            <label className="etiquette">Mot de passe</label>
-            <input
-              type="password"
-              className="champ-saisie"
-              value={motDePasse}
-              onChange={(e) => setMotDePasse(e.target.value)}
-              minLength={6}
-              required
-            />
-          </div>
           {erreur && <p className="text-sm text-danger">{erreur}</p>}
           <button className="bouton-primaire w-full" disabled={chargement} type="submit">
-            {chargement ? "Création…" : "Créer mon compte"}
+            {chargement ? "Création…" : "Créer mon profil"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          Déjà inscrit ?{" "}
+          Déjà un profil ?{" "}
           <Link href="/connexion" className="font-semibold text-educia-700">
-            Connectez-vous
+            Retour à la sélection
           </Link>
         </p>
       </div>
