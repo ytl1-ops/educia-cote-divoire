@@ -1,8 +1,9 @@
 /**
- * Script ponctuel exécuté une fois pendant le build Netlify (qui a accès à
- * la base, contrairement à l'environnement de développement) pour créer :
+ * Script ponctuel exécuté pendant le build Netlify (qui a accès à la base,
+ * contrairement à l'environnement de développement) pour créer :
  * - le compte administrateur du porteur de projet
- * - un compte élève de démonstration, pour tester le parcours parent
+ * - un compte élève de démonstration
+ * - un compte parent de démonstration, déjà lié à l'élève démo
  *
  * Idempotent : ne recrée rien si les comptes existent déjà, donc sans
  * danger de le laisser dans le pipeline de build.
@@ -15,11 +16,11 @@ const prisma = new PrismaClient();
 async function creerSiAbsent(params: {
   email: string;
   motDePasse: string;
-  role: "ADMIN" | "ELEVE";
+  role: "ADMIN" | "ELEVE" | "PARENT";
   prenom: string;
   nom: string;
   niveau?: string;
-}) {
+}): Promise<string> {
   const existant = await prisma.utilisateur.findUnique({ where: { email: params.email } });
   if (existant) {
     console.log(`[OK] Compte déjà existant : ${params.email} (${existant.role})`);
@@ -36,7 +37,7 @@ async function creerSiAbsent(params: {
         console.log(`      Code de liaison : ${eleve.id.slice(-8).toUpperCase()}`);
       }
     }
-    return;
+    return existant.id;
   }
 
   const motDePasseH = await bcrypt.hash(params.motDePasse, 12);
@@ -48,6 +49,7 @@ async function creerSiAbsent(params: {
       prenom: params.prenom,
       nom: params.nom,
       ...(params.role === "ADMIN" ? { admin: { create: {} } } : {}),
+      ...(params.role === "PARENT" ? { parent: { create: {} } } : {}),
       ...(params.role === "ELEVE"
         ? { eleve: { create: { niveau: params.niveau as any, etablissement: "Groupe Scolaire Démo" } } }
         : {}),
@@ -59,6 +61,22 @@ async function creerSiAbsent(params: {
   if (utilisateur.eleve) {
     console.log(`       Code de liaison : ${utilisateur.eleve.id.slice(-8).toUpperCase()}`);
   }
+  return utilisateur.id;
+}
+
+async function lierParentEleve(emailParent: string, emailEleve: string) {
+  const parent = await prisma.parent.findFirst({ where: { utilisateur: { email: emailParent } } });
+  const eleve = await prisma.eleve.findFirst({ where: { utilisateur: { email: emailEleve } } });
+  if (!parent || !eleve) {
+    console.log("[!] Impossible de lier parent/élève démo (compte introuvable)");
+    return;
+  }
+  await prisma.relationParentEleve.upsert({
+    where: { parentId_eleveId: { parentId: parent.id, eleveId: eleve.id } },
+    create: { parentId: parent.id, eleveId: eleve.id },
+    update: {},
+  });
+  console.log("[OK] Parent démo <-> Élève démo liés");
 }
 
 async function main() {
@@ -78,6 +96,14 @@ async function main() {
     nom: "Démo",
     niveau: "SECONDE",
   });
+  await creerSiAbsent({
+    email: "parent.demo@educia.ci",
+    motDePasse: "Parent12345!",
+    role: "PARENT",
+    prenom: "Koffi",
+    nom: "Démo",
+  });
+  await lierParentEleve("parent.demo@educia.ci", "eleve.demo@educia.ci");
   console.log("=== Fin comptes de démonstration ===");
 }
 
