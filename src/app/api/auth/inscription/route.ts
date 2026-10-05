@@ -40,7 +40,6 @@ export async function POST(requete: NextRequest) {
       ...(donnees.role === "PARENT" ? { parent: { create: {} } } : {}),
       ...(donnees.role === "ENSEIGNANT" ? { enseignant: { create: { etablissement: donnees.etablissement } } } : {}),
     },
-    include: { eleve: true, parent: true, enseignant: true },
   });
 
   const jeton = await creerJetonSession({
@@ -52,12 +51,6 @@ export async function POST(requete: NextRequest) {
   await poserCookieSession(jeton);
 
   return NextResponse.json({
-    utilisateur: {
-      id: utilisateur.id,
-      prenom: utilisateur.prenom,
-      nom: utilisateur.nom,
-      role: utilisateur.role,
-      codeLiaisonEleve: utilisateur.eleve ? utilisateur.eleve.id.slice(-8).toUpperCase() : undefined,
-    },
+    utilisateur: { id: utilisateur.id, prenom: utilisateur.prenom, nom: utilisateur.nom, role: utilisateur.role },
   });
 }

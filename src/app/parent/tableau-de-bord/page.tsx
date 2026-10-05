@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { appelAPI } from "@/lib/client-api";
+import { NIVEAUX } from "@/lib/programmes/curriculum";
 
 interface Rapport {
   eleve: { prenom: string; nom: string; niveau: string };
@@ -19,30 +20,47 @@ interface Rapport {
 }
 
 interface EnfantLie {
+  id: string;
   prenom: string;
   nom: string;
   niveau: string;
 }
 
+function libelleNiveau(code: string) {
+  return NIVEAUX.find((n) => n.code === code)?.libelle ?? code;
+}
+
 export default function TableauDeBordParent() {
-  const [codeLiaison, setCodeLiaison] = useState("");
+  const [lies, setLies] = useState<EnfantLie[] | null>(null);
+  const [disponibles, setDisponibles] = useState<EnfantLie[]>([]);
   const [eleveId, setEleveId] = useState<string | null>(null);
-  const [enfant, setEnfant] = useState<EnfantLie | null>(null);
   const [rapport, setRapport] = useState<Rapport | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [chargement, setChargement] = useState(false);
 
-  async function lierEnfant() {
+  async function chargerEnfants() {
+    const { lies: l, disponibles: d } = await appelAPI<{ lies: EnfantLie[]; disponibles: EnfantLie[] }>("/api/parents/enfants");
+    setLies(l);
+    setDisponibles(d);
+    if (l.length > 0 && !eleveId) {
+      setEleveId(l[0].id);
+      await chargerRapport(l[0].id, "HEBDOMADAIRE");
+    }
+  }
+
+  useEffect(() => {
+    chargerEnfants().catch((e) => setErreur((e as Error).message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function suivreEnfant(id: string) {
     setChargement(true);
     setErreur(null);
     try {
-      const resultat = await appelAPI<{ relation: { eleveId: string }; enfant: EnfantLie }>("/api/parents/lier", {
-        method: "POST",
-        corpsJSON: { codeLiaison },
-      });
-      setEleveId(resultat.relation.eleveId);
-      setEnfant(resultat.enfant);
-      await chargerRapport(resultat.relation.eleveId, "HEBDOMADAIRE");
+      await appelAPI("/api/parents/lier", { method: "POST", corpsJSON: { eleveId: id } });
+      await chargerEnfants();
+      setEleveId(id);
+      await chargerRapport(id, "HEBDOMADAIRE");
     } catch (e) {
       setErreur((e as Error).message);
     } finally {
@@ -55,41 +73,83 @@ export default function TableauDeBordParent() {
     setRapport(rapport);
   }
 
-  if (!eleveId) {
-    return (
-      <div className="mx-auto max-w-sm">
-        <h1 className="text-xl font-bold text-slate-900">Suivre mon enfant</h1>
-        <p className="mt-1 text-sm text-slate-500">Entrez le code de liaison affiché dans le profil de votre enfant.</p>
-        <div className="carte mt-4">
-          <label className="etiquette">Code de liaison</label>
-          <input className="champ-saisie uppercase" value={codeLiaison} onChange={(e) => setCodeLiaison(e.target.value)} />
-          {erreur && <p className="mt-2 text-sm text-danger">{erreur}</p>}
-          <button className="bouton-primaire mt-4 w-full" onClick={lierEnfant} disabled={chargement || !codeLiaison}>
-            {chargement ? "Vérification…" : "Lier mon enfant"}
-          </button>
-        </div>
-      </div>
-    );
+  function changerEnfant(id: string) {
+    setEleveId(id);
+    chargerRapport(id, "HEBDOMADAIRE").catch((e) => setErreur((e as Error).message));
   }
+
+  const enfantCourant = lies?.find((e) => e.id === eleveId) ?? null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900">
-          {enfant ? `Suivi de ${enfant.prenom}` : "Suivi"}
-        </h1>
-        <div className="flex gap-2 text-xs">
-          <button className="bouton-secondaire px-3 py-1.5" onClick={() => chargerRapport(eleveId, "HEBDOMADAIRE")}>
-            Semaine
-          </button>
-          <button className="bouton-secondaire px-3 py-1.5" onClick={() => chargerRapport(eleveId, "MENSUEL")}>
-            Mois
-          </button>
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Suivi de mes enfants</h1>
+        <p className="text-sm text-slate-500">Choisissez un profil élève pour le suivre — aucun code requis.</p>
       </div>
 
-      {rapport && (
+      {erreur && <p className="text-sm text-danger">{erreur}</p>}
+
+      {lies && lies.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {lies.map((e) => (
+            <button
+              key={e.id}
+              onClick={() => changerEnfant(e.id)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${
+                eleveId === e.id ? "border-educia-600 bg-educia-50 text-educia-700" : "border-slate-200 text-slate-500"
+              }`}
+            >
+              {e.prenom}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {disponibles.length > 0 && (
+        <div className="carte">
+          <h2 className="text-sm font-semibold text-slate-900">
+            {lies && lies.length > 0 ? "Suivre un autre profil" : "Choisissez le profil de votre enfant"}
+          </h2>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {disponibles.map((e) => (
+              <button
+                key={e.id}
+                onClick={() => suivreEnfant(e.id)}
+                disabled={chargement}
+                className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-slate-300 px-3 py-3 text-center hover:border-educia-400 hover:bg-educia-50 disabled:opacity-50"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-educia-600 text-sm font-bold text-white">
+                  {e.prenom.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-sm font-semibold text-slate-900">{e.prenom}</span>
+                <span className="text-xs text-slate-500">{libelleNiveau(e.niveau)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {lies && lies.length === 0 && disponibles.length === 0 && (
+        <p className="text-sm text-slate-500">
+          Aucun profil élève n&apos;existe encore. Demandez à votre enfant de créer le sien depuis l&apos;écran de connexion
+          (bouton « Nouveau profil »), il apparaîtra automatiquement ici.
+        </p>
+      )}
+
+      {rapport && enfantCourant && (
         <>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-900">Suivi de {enfantCourant.prenom}</h2>
+            <div className="flex gap-2 text-xs">
+              <button className="bouton-secondaire px-3 py-1.5" onClick={() => chargerRapport(enfantCourant.id, "HEBDOMADAIRE")}>
+                Semaine
+              </button>
+              <button className="bouton-secondaire px-3 py-1.5" onClick={() => chargerRapport(enfantCourant.id, "MENSUEL")}>
+                Mois
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="carte text-center">
               <p className="text-xl font-bold text-educia-700">{Math.round(rapport.tempsTravailSecondes / 60)} min</p>

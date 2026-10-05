@@ -20,45 +20,22 @@ export default function PageInscription() {
   const [niveau, setNiveau] = useState<CodeNiveau>(NIVEAUX[0].code);
   const [erreur, setErreur] = useState<string | null>(null);
   const [chargement, setChargement] = useState(false);
-  const [codeLiaison, setCodeLiaison] = useState<string | null>(null);
 
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
     setErreur(null);
     setChargement(true);
     try {
-      const { utilisateur } = await appelAPI<{ utilisateur: { role: string; codeLiaisonEleve?: string } }>(
-        "/api/auth/inscription",
-        { method: "POST", corpsJSON: { role, prenom, nom, niveau: role === "ELEVE" ? niveau : undefined } }
-      );
-      if (utilisateur.codeLiaisonEleve) {
-        setCodeLiaison(utilisateur.codeLiaisonEleve);
-        return;
-      }
+      const { utilisateur } = await appelAPI<{ utilisateur: { role: string } }>("/api/auth/inscription", {
+        method: "POST",
+        corpsJSON: { role, prenom, nom, niveau: role === "ELEVE" ? niveau : undefined },
+      });
       routeur.push(ACCUEIL_PAR_ROLE[utilisateur.role] ?? "/");
     } catch (e) {
       setErreur((e as Error).message);
     } finally {
       setChargement(false);
     }
-  }
-
-  if (codeLiaison) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-        <div className="carte w-full max-w-sm text-center">
-          <div className="text-4xl">🎉</div>
-          <h1 className="mt-3 text-lg font-bold text-slate-900">Profil créé !</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Communique ce code à tes parents pour qu&apos;ils puissent suivre tes progrès :
-          </p>
-          <p className="mt-3 rounded-lg bg-educia-50 py-3 text-2xl font-bold tracking-widest text-educia-700">{codeLiaison}</p>
-          <button className="bouton-primaire mt-6 w-full" onClick={() => routeur.push("/eleve/tableau-de-bord")}>
-            Accéder à mon tableau de bord
-          </button>
-        </div>
-      </main>
-    );
   }
 
   return (

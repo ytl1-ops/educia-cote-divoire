@@ -21,7 +21,6 @@ interface Utilisateur {
 export default function TableauDeBordEleve() {
   const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(null);
   const [progres, setProgres] = useState<DonneesProgres | null>(null);
-  const [codeCopie, setCodeCopie] = useState(false);
 
   useEffect(() => {
     appelAPI<{ utilisateur: Utilisateur }>("/api/auth/moi").then((d) => setUtilisateur(d.utilisateur));
@@ -30,18 +29,6 @@ export default function TableauDeBordEleve() {
 
   const niveau = utilisateur?.eleve?.niveau ? definitionNiveau(utilisateur.eleve.niveau as any) : undefined;
   const matieres = utilisateur?.eleve?.niveau ? matieresDuNiveau(utilisateur.eleve.niveau as any) : [];
-  const codeLiaison = utilisateur?.eleve?.id ? utilisateur.eleve.id.slice(-8).toUpperCase() : null;
-
-  async function copierCode() {
-    if (!codeLiaison) return;
-    try {
-      await navigator.clipboard.writeText(codeLiaison);
-      setCodeCopie(true);
-      setTimeout(() => setCodeCopie(false), 2000);
-    } catch {
-      // Le navigateur peut refuser l'accès au presse-papier (ex: ancien navigateur) — pas bloquant.
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -51,19 +38,6 @@ export default function TableauDeBordEleve() {
         </h1>
         <p className="text-slate-500">{niveau ? `${niveau.libelle} — prêt(e) à progresser aujourd'hui ?` : ""}</p>
       </div>
-
-      {codeLiaison && (
-        <div className="carte flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Code de liaison parent</p>
-            <p className="text-xs text-slate-500">À communiquer à tes parents pour qu'ils suivent tes progrès.</p>
-            <p className="mt-1 text-xl font-bold tracking-widest text-educia-700">{codeLiaison}</p>
-          </div>
-          <button className="bouton-secondaire shrink-0 px-3 py-2 text-xs" onClick={copierCode}>
-            {codeCopie ? "Copié !" : "Copier"}
-          </button>
-        </div>
-      )}
 
       {progres && (
         <div className="grid grid-cols-3 gap-3">
