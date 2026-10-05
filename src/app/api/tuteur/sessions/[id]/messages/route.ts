@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { exigerEleve, reponseErreur, ErreurAPI } from "@/lib/securite-api";
-import { demanderIA, MessageIA } from "@/lib/ai/gemini";
+import { demanderIA, MessageIA } from "@/lib/ai/groq";
 import { construirePromptTuteur } from "@/lib/ai/tuteur-prompt";
 import { agentRechercheAutonome } from "@/lib/ai/recherche-web";
 import { ajouterPoints, mettreAJourStreak, POINTS } from "@/lib/gamification";

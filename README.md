@@ -18,7 +18,7 @@ Voir [docs/INSTALLATION.md](docs/INSTALLATION.md) pour la procédure complète. 
 
 ```bash
 npm install
-cp .env.example .env   # puis renseignez DATABASE_URL et GEMINI_API_KEY au minimum
+cp .env.example .env   # puis renseignez DATABASE_URL et GROQ_API_KEY au minimum
 npm run db:push
 npm run db:seed
 npm run dev
@@ -40,7 +40,7 @@ Ouvrez http://localhost:3000.
 | Frontend | Next.js 14 (App Router), React, TypeScript, TailwindCSS, PWA |
 | Backend | Next.js Route Handlers (Node.js), Prisma ORM |
 | Base de données | PostgreSQL |
-| IA | Google Gemini — palier gratuit (tuteur, vision/OCR, génération, correction) |
+| IA | Groq — palier gratuit (tuteur, vision/OCR, génération, correction) |
 | Authentification | JWT (jose) + cookies HTTP-only, mots de passe hachés (bcrypt) |
 
 ## Licence et usage

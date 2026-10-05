@@ -1,4 +1,4 @@
-import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
+import { demanderIA, extraireJSON } from "@/lib/ai/groq";
 import { CodeNiveau, definitionNiveau } from "@/lib/programmes/curriculum";
 import { ExerciceGenere } from "@/lib/ai/generateur-exercices";
 

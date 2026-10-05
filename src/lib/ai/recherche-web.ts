@@ -1,4 +1,4 @@
-import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
+import { demanderIA, extraireJSON } from "@/lib/ai/groq";
 
 /**
  * Agent de recherche web autonome.

@@ -1,4 +1,4 @@
-import { demanderIAAvecImage, demanderIA, extraireJSON, ImagePourIA } from "@/lib/ai/gemini";
+import { demanderIAAvecImage, demanderIA, extraireJSON, ImagePourIA } from "@/lib/ai/groq";
 import { MATIERES, NIVEAUX } from "@/lib/programmes/curriculum";
 
 export interface ResultatAnalyseDocument {
@@ -38,7 +38,7 @@ Réponds UNIQUEMENT avec un objet JSON strictement conforme à ce schéma, sans 
   "typeContenu": "texte_imprime" | "ecriture_manuscrite" | "mixte" | "tableau_graphique" | "formule" | "schema" | "inconnu"
 }`;
 
-/** Analyse une image (photo, scan) via la vision de Gemini. */
+/** Analyse une image (photo, scan) via la vision de Groq. */
 export async function analyserImageDocument(image: ImagePourIA): Promise<ResultatAnalyseDocument> {
   const reponse = await demanderIAAvecImage({
     systeme: PROMPT_SYSTEME_ANALYSE,

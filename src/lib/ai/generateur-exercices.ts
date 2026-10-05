@@ -1,4 +1,4 @@
-import { demanderIA, extraireJSON } from "@/lib/ai/gemini";
+import { demanderIA, extraireJSON } from "@/lib/ai/groq";
 import { CodeNiveau, definitionMatiere, definitionNiveau } from "@/lib/programmes/curriculum";
 
 export interface ExerciceGenere {

@@ -21,7 +21,7 @@ vercel login
 vercel link
 vercel env add DATABASE_URL
 vercel env add JWT_SECRET
-vercel env add GEMINI_API_KEY
+vercel env add GROQ_API_KEY
 # ... (répéter pour chaque variable nécessaire de .env.example)
 vercel --prod
 ```
@@ -89,9 +89,9 @@ Points d'intégration prévus (variables déjà dans `.env.example`) :
 
 ## Observabilité recommandée avant une mise en production à grande échelle
 
-- Journalisation structurée des erreurs (ex: Sentry) sur les routes API, en particulier le moteur IA (latence et taux d'échec des appels Gemini).
+- Journalisation structurée des erreurs (ex: Sentry) sur les routes API, en particulier le moteur IA (latence et taux d'échec des appels Groq).
 - Alerting sur le volume de recherches web déclenchées (dérive possible de l'agent autonome hors des règles prévues).
-- Suivi de la consommation du quota gratuit Gemini (requêtes/jour) pour anticiper un passage à un palier payant si l'usage grandit.
+- Suivi de la consommation du quota gratuit Groq (requêtes/jour et tokens/minute) pour anticiper un passage à un palier payant si l’usage grandit.
 
 ## Checklist avant mise en production
 
