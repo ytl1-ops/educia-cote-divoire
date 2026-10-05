@@ -25,7 +25,16 @@ async function creerSiAbsent(params: {
     console.log(`[OK] Compte déjà existant : ${params.email} (${existant.role})`);
     if (params.role === "ELEVE") {
       const eleve = await prisma.eleve.findUnique({ where: { utilisateurId: existant.id } });
-      if (eleve) console.log(`      Code de liaison : ${eleve.id.slice(-8).toUpperCase()}`);
+      if (eleve) {
+        if (params.niveau && eleve.niveau !== params.niveau) {
+          const miseAJour = await prisma.eleve.update({
+            where: { id: eleve.id },
+            data: { niveau: params.niveau as any },
+          });
+          console.log(`      Niveau mis à jour : ${eleve.niveau} -> ${miseAJour.niveau}`);
+        }
+        console.log(`      Code de liaison : ${eleve.id.slice(-8).toUpperCase()}`);
+      }
     }
     return;
   }
@@ -67,7 +76,7 @@ async function main() {
     role: "ELEVE",
     prenom: "Aïcha",
     nom: "Démo",
-    niveau: "CM2",
+    niveau: "SECONDE",
   });
   console.log("=== Fin comptes de démonstration ===");
 }
