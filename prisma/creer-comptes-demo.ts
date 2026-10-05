@@ -36,7 +36,6 @@ async function creerSiAbsent(params: {
           });
           console.log(`      Niveau mis à jour : ${eleve.niveau} -> ${miseAJour.niveau}`);
         }
-        console.log(`      Code de liaison : ${eleve.id.slice(-8).toUpperCase()}`);
       }
     }
     return existant.id;
@@ -60,9 +59,6 @@ async function creerSiAbsent(params: {
   });
 
   console.log(`[CREE] ${params.role} : ${params.email} / mot de passe : ${params.motDePasse}`);
-  if (utilisateur.eleve) {
-    console.log(`       Code de liaison : ${utilisateur.eleve.id.slice(-8).toUpperCase()}`);
-  }
   return utilisateur.id;
 }
 
