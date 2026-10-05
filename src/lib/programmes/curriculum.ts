@@ -84,6 +84,7 @@ export const MATIERES: DefinitionMatiere[] = [
   { code: "ESPAGNOL", nom: "Espagnol", cycles: ["COLLEGE", "LYCEE"], couleur: "#EA580C", icone: "🇪🇸" },
   { code: "LATIN", nom: "Latin", cycles: ["COLLEGE", "LYCEE"], couleur: "#78716C", icone: "🏺" },
   { code: "ARTS_PLASTIQUES", nom: "Arts Plastiques", cycles: ["PRIMAIRE", "COLLEGE"], couleur: "#DB2777", icone: "🎨" },
+  { code: "MUSIQUE", nom: "Éducation Musicale", cycles: ["PRESCOLAIRE", "PRIMAIRE", "COLLEGE"], couleur: "#7C2D92", icone: "🎵" },
   { code: "EPS", nom: "Éducation Physique et Sportive", cycles: ["PRIMAIRE", "COLLEGE", "LYCEE"], couleur: "#0D9488", icone: "⚽" },
 ];
 

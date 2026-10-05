@@ -10,7 +10,7 @@
  * plus tard sans toucher au reste du code.
  */
 
-export const MODELE_IA = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+export const MODELE_IA = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 const MODELE_VISION = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
 
 const URL_BASE = "https://api.groq.com/openai/v1/chat/completions";
