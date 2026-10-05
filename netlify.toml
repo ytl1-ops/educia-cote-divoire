@@ -1,5 +1,5 @@
 [build]
-  command = "echo '--- ETAPE 1 prisma generate ---' && npx prisma generate && echo '--- ETAPE 2 prisma db push ---' && npx prisma db push --accept-data-loss --skip-generate && echo '--- ETAPE 3 seed ---' && npx tsx prisma/seed.ts && echo '--- ETAPE 4 next build ---' && npm run build"
+  command = "echo '--- ETAPE 1 prisma generate ---' && npx prisma generate && echo '--- ETAPE 2 prisma db push ---' && npx prisma db push --accept-data-loss --skip-generate && echo '--- ETAPE 3 seed ---' && npx tsx prisma/seed.ts && echo '--- ETAPE 4 comptes demo ---' && npx tsx prisma/creer-comptes-demo.ts && echo '--- ETAPE 5 next build ---' && npm run build"
   publish = ".next"
 
 [[plugins]]
