@@ -32,5 +32,6 @@ export function reponseErreur(erreur: unknown) {
     return NextResponse.json({ erreur: erreur.message }, { status: erreur.statut });
   }
   console.error(erreur);
-  return NextResponse.json({ erreur: "Erreur interne du serveur" }, { status: 500 });
+  const message = erreur instanceof Error ? erreur.message : "Erreur interne du serveur";
+  return NextResponse.json({ erreur: message }, { status: 500 });
 }
