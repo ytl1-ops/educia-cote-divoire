@@ -1,3 +1,6 @@
+# Pipeline de build : la base (Neon) n'est accessible qu'ici, pas depuis
+# l'environnement de développement — schéma, seed et comptes démo sont donc
+# appliqués à chaque déploiement (toutes les étapes sont idempotentes).
 [build]
   command = "echo '--- ETAPE 1 prisma generate ---' && npx prisma generate && echo '--- ETAPE 2 prisma db push ---' && npx prisma db push --accept-data-loss --skip-generate && echo '--- ETAPE 3 seed ---' && npx tsx prisma/seed.ts && echo '--- ETAPE 4 comptes demo ---' && npx tsx prisma/creer-comptes-demo.ts && echo '--- ETAPE 5 next build ---' && npm run build"
   publish = ".next"
